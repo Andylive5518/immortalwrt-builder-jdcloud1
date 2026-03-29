@@ -134,3 +134,8 @@ CONFIG_PACKAGE_usbutils=y
 CONFIG_PACKAGE_xz-utils=y
 CONFIG_PACKAGE_dnsmasq-full=y
 CONFIG_PACKAGE_dnsmasq=n
+#启用 iptables-nft
+CONFIG_ PACKAGE_iptables-nft=y
+CONFIG_ PACKAGE_ip6tables-nft=y
+CONFIG_ PACKAGE_iptables=n
+CONFIG_ PACKAGE_ip6tables=n
