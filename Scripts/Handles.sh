@@ -101,9 +101,9 @@ if [ -d *"luci-app-netspeedtest"* ]; then
 fi
 
 # 修复luci-app-dockerman版本号问题 (移除v前缀以符合APK规范)
-DOCKERMAN_FILE="../feeds/luci/applications/luci-app-dockerman/Makefile"
-if [ -f "$DOCKERMAN_FILE" ]; then
-	echo " "
+DOCKERMAN_FILE=$(find . -path "*/luci-app-dockerman/Makefile" -type f 2>/dev/null | head -1)
+if [ -n "$DOCKERMAN_FILE" ] && [ -f "$DOCKERMAN_FILE" ]; then
+	echo "Found dockerman at: $DOCKERMAN_FILE"
 	sed -i 's/PKG_VERSION:=v/PKG_VERSION:=/g' "$DOCKERMAN_FILE"
 	cd $PKG_PATH && echo "luci-app-dockerman version has been fixed!"
 fi
