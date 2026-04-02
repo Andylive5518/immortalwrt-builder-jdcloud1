@@ -22,7 +22,8 @@ on:
         type: boolean
 
 #CI权限
-permissions: contents: write
+permissions:
+  contents: write
 
 #CI任务
 jobs:
