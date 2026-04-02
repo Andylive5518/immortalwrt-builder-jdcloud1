@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Projects
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
 
       - name: Initialization Environment
         env:
@@ -115,7 +115,7 @@ jobs:
       - name: Check Caches
         id: check-cache
         if: env.WRT_TEST != 'true'
-        uses: actions/cache@main
+        uses: actions/cache@v4
         with:
           key: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_HASH}}
           restore-keys: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}
@@ -157,9 +157,12 @@ jobs:
 
       - name: Custom Packages
         run: |
-          cd ./wrt/package/
+          cd ./wrt/
 
+          # 运行增强后的插件安装脚本 (feeds + 批量处理 + 自定义插件)
           $GITHUB_WORKSPACE/Scripts/Packages.sh
+
+          # 运行修复脚本 (版本修复等)
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
       - name: Custom Settings

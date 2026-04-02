@@ -1,109 +1,122 @@
 #!/bin/bash
-# SPDX-License-Identifier: MIT
+# SPDX--License-Identifier-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
-PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
+PKG__PATH="${GITHUB_WORKSPACE:-.}/wrt/package/"
+
+# Helper function to check if directory exists with pattern matching
+dir_exists() {
+    local pattern="$1"
+    for dir in "$PKG_PATH"*; do
+        [[ -d "$dir" && "$(basename "$dir")" == *"$pattern"* ]] && return 0
+    done
+    return 1
+}
 
 #预置HomeProxy数据
-if [ -d *"homeproxy"* ]; then
-	echo " "
+if dir_exists "homeproxy"; then
+    echo " "
 
-	HP_RULE="surge"
-	HP_PATH="homeproxy/root/etc/homeproxy"
+    HP_RULE="surge"
+    HP_PATH="homeproxy/root/etc/homeproxy"
 
-	rm -rf ./$HP_PATH/resources/*
+    rm -rf ./"$HP_PATH"/resources/*
 
-	git clone -q --depth=1 --single-branch --branch "release" "https://github.com/Loyalsoldier/surge-rules.git" ./$HP_RULE/
-	cd ./$HP_RULE/ && RES_VER=$(git log -1 --pretty=format:'%s' | grep -o "[0-9]*")
+    git clone -q --depth=1 --single-branch --branch "release" "https://github.com/Loyalsoldier/surge-rules.git" ./"$HP_RULE"/
+    cd ./"$HP_RULE"/ && RES_VER=$(git log -1 --pretty=format:'%s' | grep -o "[0-9]*")
 
-	echo $RES_VER | tee china_ip4.ver china_ip6.ver china_list.ver gfw_list.ver
-	awk -F, '/^IP-CIDR,/{print $2 > "china_ip4.txt"} /^IP-CIDR6,/{print $2 > "china_ip6.txt"}' cncidr.txt
-	sed 's/^\.//g' direct.txt > china_list.txt ; sed 's/^\.//g' gfw.txt > gfw_list.txt
-	mv -f ./{china_*,gfw_list}.{ver,txt} ../$HP_PATH/resources/
+    echo "$RES_VER" | tee china_ip4.ver china_ip6.ver china_list.ver gfw_list.ver
+    awk -F, '/^IP-CIDR,/{print $2 > "china_ip4.txt"} /^IP-CIDR6,/{print $2 > "china_ip6.txt"}' cncidr.txt
+    sed 's/^\.//g' direct.txt > china_list.txt ; sed 's/^\.//g' gfw.txt > gfw_list.txt
+    mv -f ./{china_*,gfw_list}.{ver,txt} ../"$HP_PATH"/resources/
 
-	cd .. && rm -rf ./$HP_RULE/
+    cd .. && rm -rf ./"$HP_RULE"/
 
-	cd $PKG_PATH && echo "homeproxy date has been updated!"
+    cd "$PKG_PATH" && echo "homeproxy date has been updated!"
 fi
 
 #修改argon主题字体和颜色
-if [ -d *"luci-theme-argon"* ]; then
-	echo " "
+if dir_exists "luci-theme-argon"; then
+    echo " "
 
-	cd ./luci-theme-argon/
+    cd ./luci-theme-argon/
 
-	sed -i "s/primary '.*'/primary '#31a1a1'/; s/'0.2'/'0.5'/; s/'none'/'bing'/; s/'600'/'normal'/" ./luci-app-argon-config/root/etc/config/argon
+    sed -i "s/primary '.*'/primary '#31a1a1'/; s/'0.2'/'0.5'/; s/'none'/'bing'/; s/'600'/'normal'/" ./luci-app-argon-config/root/etc/config/argon 2>/dev/null || true
 
-	cd $PKG_PATH && echo "theme-argon has been fixed!"
+    cd "$PKG_PATH" && echo "theme-argon has been fixed!"
 fi
 
 #修改aurora菜单式样
-if [ -d *"luci-app-aurora-config"* ]; then
-	echo " "
+if dir_exists "luci-app-aurora-config"; then
+    echo " "
 
-	cd ./luci-app-aurora-config/
+    cd ./luci-app-aurora-config/
 
-	sed -i "s/nav_submenu_type '.*'/nav_submenu_type 'boxed-dropdown'/g" $(find ./root/ -type f -name "*aurora")
+    sed -i "s/nav_submenu_type '.*'/nav_submenu_type 'boxed-dropdown'/g" $(find ./root/ -type f -name "*aurora" 2>/dev/null) 2>/dev/null || true
 
-	cd $PKG_PATH && echo "theme-aurora has been fixed!"
+    cd "$PKG_PATH" && echo "theme-aurora has been fixed!"
 fi
 
-#修改qca-nss-drv启动顺序
+#修改qca- nss-drv启动顺序
 NSS_DRV="../feeds/nss_packages/qca-nss-drv/files/qca-nss-drv.init"
 if [ -f "$NSS_DRV" ]; then
-	echo " "
+    echo " "
 
-	sed -i 's/START=.*/START=85/g' $NSS_DRV
+    sed -i 's/START=.*/START=85/g' "$NSS_DRV"
 
-	cd $PKG_PATH && echo "qca-nss-drv has been fixed!"
+    cd "$PKG_PATH" && echo "qca-nss-drv has been fixed!"
 fi
 
 #修改qca-nss-pbuf启动顺序
-NSS_PBUF="./kernel/mac80211/files/qca-nss-pbuf.init"
+NSS_PBUF="./kernel/mac80 211/files/qca-nss-pbuf.init"
 if [ -f "$NSS_PBUF" ]; then
-	echo " "
+    echo " "
 
-	sed -i 's/START=.*/START=86/g' $NSS_PBUF
+    sed -i 's/START=.*/START=86/g' "$NSS_PBUF"
 
-	cd $PKG_PATH && echo "qca-nss-pbuf has been fixed!"
+    cd "$PKG_PATH" && echo "qca-nss-pbuf has been fixed!"
 fi
 
 #修复Rust编译失败
-RUST_FILE=$(find ../feeds/packages/ -maxdepth 3 -type f -wholename "*/rust/Makefile")
-if [ -f "$RUST_FILE" ]; then
-	echo " "
+RUST_FILE=$(find ../feeds/packages/ -maxdepth 3 -type f -wholename "*/rust/Makefile" 2>/dev/null)
+if [ -n "$RUST_FILE" ] && [ -f "$RUST_FILE" ]; then
+    echo " "
 
-	sed -i 's/ci-llvm=true/ci-llvm=false/g' $RUST_FILE
+    for rust_makefile in $RUST_FILE; do
+        sed -i 's/ci-llvm=true/ci-llvm=false/g' "$rust_makefile"
+    done
 
-	cd $PKG_PATH && echo "rust has been fixed!"
+    cd "$PKG_PATH" && echo "rust has been fixed!"
 fi
 
 #修复DiskMan编译失败
 DM_FILE="./luci-app-diskman/applications/luci-app-diskman/Makefile"
 if [ -f "$DM_FILE" ]; then
-	echo " "
+    echo " "
 
-	sed -i '/ntfs-3g-utils /d' $DM_FILE
+    sed -i '/ntfs-3g-utils /d' "$DM_FILE"
 
-	cd $PKG_PATH && echo "diskman has been fixed!"
+    cd "$PKG_PATH" && echo "diskman has been fixed!"
 fi
 
-#修复luci-app-netspeedtest相关问题
-if [ -d *"luci-app-netspeedtest"* ]; then
-	echo " "
+#修复luci-app- netspeedtest相关问题
+if dir_exists "luci-app-netspeedtest"; then
+    echo " "
 
-	cd ./luci-app-netspeedtest/
+    cd ./luci-app-netspeedtest/
 
-	sed -i '$a\exit 0' ./netspeedtest/files/99_netspeedtest.defaults
-	sed -i 's/ca-certificates/ca-bundle/g' ./speedtest-cli/Makefile
+    sed -i '$a\exit 0' ./netspeedtest/files/99_netspeedtest.defaults 2>/dev/null || true
+    sed -i 's/ca-certificates/ca-bundle/g' ./speedtest-cli/Makefile 2>/dev/null || true
 
-	cd $PKG_PATH && echo "netspeedtest has been fixed!"
+    cd "$PKG_PATH" && echo "netspeedtest has been fixed!"
 fi
 
 # 修复luci-app-dockerman版本号问题 (移除v前缀以符合APK规范)
-DOCKERMAN_FILE=$(find . -path "*/luci-app-dockerman/Makefile" -type f 2>/dev/null | head -1)
-if [ -n "$DOCKERMAN_FILE" ] && [ -f "$DOCKERMAN_FILE" ]; then
-	echo "Found dockerman at: $DOCKERMAN_FILE"
-	sed -i 's/PKG_VERSION:=v/PKG_VERSION:=/g' "$DOCKERMAN_FILE"
-	cd $PKG_PATH && echo "luci-app-dockerman version has been fixed!"
+DOCKER_MAN_FILE=$(find . -path "*/luci-app-dockerman/Makefile" -type f 2>/dev/null | head -1)
+if [ -n "$DOCKER_MAN_FILE" ] && [ -f "$DOCKER_MAN_FILE" ]; then
+    echo "Found dockerman at: $DOCKER_MAN_FILE"
+    sed -i 's/PKG_VERSION:=v/PKG_VERSION:=/g' "$DOCKER_MAN_FILE"
+    cd "$PKG_PATH" && echo "luci-app-dockerman version has been fixed!"
 fi
+
+echo "All fixes completed!"
