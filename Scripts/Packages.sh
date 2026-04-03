@@ -123,39 +123,39 @@ ADD_THIRD_PARTY_FEEDS() {
 # ============================================================================
 
 UPDATE_PACKAGE() {
-    local PKG_ NAME="$1"
-    local PKG_ REPO="$2"
-    local PKG_ BRANCH="$3"
-    local PKG_ SPECIAL="$4"
-    local PKG_ LIST=("$PKG_ NAME" "$5")
-    local REPO_NAME="${PKG_ REPO#*/}"
+    local PKG_NAME="$1"
+    local PKG_REPO="$2"
+    local PKG_BRANCH="$3"
+    local PKG_SPECIAL="$4"
+    local PKG_LIST=("$PKG_NAME" "$5")
+    local REPO_NAME="${PKG_REPO#*/}"
     
     echo " "
-    echo ">>> 安装插件: $PKG_ NAME"
+    echo ">>> 安装插件: $PKG_NAME"
     
-    for NAME in "${PKG_ LIST[@]}"; do
-        local FOUND_ DIRS
-        FOUND_ DIRS=$(find ../feeds/luci/ ../feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null)
+    for NAME in "${PKG_LIST[@]}"; do
+        local FOUND_DIRS
+        FOUND_DIRS=$(find ../feeds/luci/ ../feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null)
         
-        if [ -n "$FOUND_ DIRS" ]; then
+        if [ -n "$FOUND_DIRS" ]; then
             while read -r DIR; do
                 [ -n "$DIR" ] && rm -rf "$DIR" && echo "  [删除] $DIR"
-            done <<< "$FOUND_ DIRS"
+            done <<< "$FOUND_DIRS"
         fi
     done
     
-    if ! git clone --depth=1 --single-branch --branch "$PKG_ BRANCH" "https://github.com/${PKG_ REPO}.git"; then
-        echo "  [错误] 克隆失败: https://github.com/${PKG_ REPO}"
+    if ! git clone --depth=1 --single-branch --branch "$PKG_BRANCH" "https://github.com/${PKG_REPO}.git"; then
+        echo "  [错误] 克隆失败: https://github.com/${PKG_REPO}"
         return 1
     fi
     
-    if [[ "$PKG_ SPECIAL" == "pkg" ]]; then
-        find "./$REPO_NAME"/*/ -maxdepth 3 -type d -iname "*$PKG_ NAME*" -prune -exec cp -rf {} ./ \; 2>/dev/null || true
+    if [[ "$PKG_SPECIAL" == "pkg" ]]; then
+        find "./$REPO_NAME"/*/ -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \; 2>/dev/null || true
         rm -rf "./$REPO_NAME"
-        echo "  [完成] 从 monorepo 提取 $PKG_ NAME"
-    elif [[ "$PKG_ SPECIAL" == "name" ]]; then
-        mv -f "$REPO_NAME" "$PKG_ NAME"
-        echo "  [完成] 重命名为 $PKG_ NAME"
+        echo "  [完成] 从 monorepo 提取 $PKG_NAME"
+    elif [[ "$PKG_SPECIAL" == "name" ]]; then
+        mv -f "$REPO_NAME" "$PKG_NAME"
+        echo "  [完成] 重命名为 $PKG_NAME"
     else
         echo "  [完成] 直接克隆"
     fi
