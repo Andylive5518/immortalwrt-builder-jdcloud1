@@ -122,18 +122,19 @@ ADD_THIRD_PARTY_FEEDS() {
 # 第三部分：安装第三方插件 (保留原有逻辑 + 增强)
 # ============================================================================
 
-UPDATE_PACKAGE() {
+UPDATE_() {
     local PKG_NAME="$1"
     local PKG_REPO="$2"
     local PKG_BRANCH="$3"
     local PKG_SPECIAL="$4"
-    local PKG_LIST=("$PKG_NAME" "$5")
+    local PKG_LIST=("$PKG_NAME" "${5:-}")
     local REPO_NAME="${PKG_REPO#*/}"
     
     echo " "
     echo ">>> 安装插件: $PKG_NAME"
     
     for NAME in "${PKG_LIST[@]}"; do
+        [ -z "$NAME" ] && continue
         local FOUND_DIRS
         FOUND_DIRS=$(find ../feeds/luci/ ../feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null)
         
@@ -142,6 +143,16 @@ UPDATE_PACKAGE() {
                 [ -n "$DIR" ] && rm -rf "$DIR" && echo "  [删除] $DIR"
             done <<< "$FOUND_DIRS"
         fi
+    done
+    
+    # 捕获 git 输出以便调试
+    local GIT_OUTPUT
+    if ! GIT_OUTPUT=$(git clone --depth=1 --single-branch --branch "$PKG_BRANCH" "https://github.com/${PKG_REPO}.git" 2>&1); then
+        echo "  [错误] 克隆失败: https://github.com/${PKG_REPO}.git"
+        echo "  [详情] $GIT_OUTPUT"
+        return 1
+    fi
+    echo "  [完成] 从 $PKG_REPO 安装"
     done
     
     if ! git clone --depth=1 --single-branch --branch "$PKG_BRANCH" "https://github.com/${PKG_REPO}.git"; then
