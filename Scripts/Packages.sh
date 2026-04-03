@@ -122,7 +122,7 @@ ADD_THIRD_PARTY_FEEDS() {
 # 第三部分：安装第三方插件 (保留原有逻辑 + 增强)
 # ============================================================================
 
-UPDATE_() {
+UPDATE_PACKAGE() {
     local PKG_NAME="$1"
     local PKG_REPO="$2"
     local PKG_BRANCH="$3"
@@ -153,12 +153,6 @@ UPDATE_() {
         return 1
     fi
     echo "  [完成] 从 $PKG_REPO 安装"
-    done
-    
-    if ! git clone --depth=1 --single-branch --branch "$PKG_BRANCH" "https://github.com/${PKG_REPO}.git"; then
-        echo "  [错误] 克隆失败: https://github.com/${PKG_REPO}"
-        return 1
-    fi
     
     if [[ "$PKG_SPECIAL" == "pkg" ]]; then
         find "./$REPO_NAME"/*/ -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \; 2>/dev/null || true
