@@ -19,7 +19,7 @@ if [ -n "$LUCI_STATUS" ] && grep -q "luciversion" "$LUCI_STATUS" 2>/dev/null; th
 fi
 
 WIFI_SH=$(find ./target/linux/{mediatek/filogic,qualcommax}/base-files/etc/uci-defaults/ -type f -name "*set-wireless.sh" 2>/dev/null)
-WIFI_UC="./package/network/config/wifi-scripts/files/lib/wifi/mac80 211.uc"
+WIFI_UC="./package/network/config/wifi-scripts/files/lib/wifi/mac80211.uc"
 if [ -f "$WIFI_SH" ]; then
     sed -i "s/BASE_SSID='.*'/BASE_SSID='${WRT_SSID:-OWRT}'/g" "$WIFI_SH"
     sed -i "s/BASE_WORD='.*'/BASE_WORD='${WRT_WORD:-12345678}'/g" "$WIFI_SH"
