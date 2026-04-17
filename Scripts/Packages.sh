@@ -260,15 +260,21 @@ FIX_PACKAGE_ISSUES() {
         local CURRENT_VERSION=$(grep -Po "PKG_VERSION:=\K.*" "$LUCI_APP_STORE_MAKEFILE" || echo "")
         
         if [[ "$CURRENT_VERSION" =~ r ]]; then
-            # 提取版本号和发布号
             local VER_NUM=$(echo "$CURRENT_VERSION" | sed -E 's/-[0-9]+-r[0-9]+//g')
             local RELEASE_NUM=$(echo "$CURRENT_VERSION" | grep -oP '(?<=-)[0-9]+(?=-r)' || echo "1")
-            
+
             sed -i "s|PKG_VERSION:=.*|PKG_VERSION:=$VER_NUM|" "$LUCI_APP_STORE_MAKEFILE"
             sed -i "s|PKG_RELEASE:=.*|PKG_RELEASE:=$RELEASE_NUM|" "$LUCI_APP_STORE_MAKEFILE" 2>/dev/null || \
                 sed -i "/PKG_VERSION/a PKG_RELEASE:=$RELEASE_NUM" "$LUCI_APP_STORE_MAKEFILE"
-            
+
             echo "    版本: $CURRENT_VERSION -> $VER_NUM (release: $RELEASE_NUM)"
+        fi
+
+        local CURRENT_RELEASE=$(grep -Po "PKG_RELEASE:=\K.*" "$LUCI_APP_STORE_MAKEFILE" || echo "")
+        if [[ "$CURRENT_RELEASE" =~ ^r ]]; then
+            local RELEASE_NUM=$(echo "$CURRENT_RELEASE" | sed 's/^r//')
+            sed -i "s|PKG_RELEASE:=.*|PKG_RELEASE:=$RELEASE_NUM|" "$LUCI_APP_STORE_MAKEFILE"
+            echo "    PKG_RELEASE: $CURRENT_RELEASE -> $RELEASE_NUM"
         fi
     fi
     

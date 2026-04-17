@@ -2,7 +2,7 @@
 # SPDX-license-identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
-PKG__PATH="${GITHUB_WORKSPACE:-.}/wrt/package/"
+PKG_PATH="${GITHUB_WORKSPACE:-.}/wrt/package/"
 
 # Helper function to check if directory exists with pattern matching
 dir_exists() {
@@ -68,7 +68,7 @@ if dir_exists "luci-app-aurora-config"; then
     cd "$PKG_PATH" && echo "theme-aurora has been fixed!"
 fi
 
-#修改qca- nss-drv启动顺序
+#修改qca-nss-drv启动顺序
 NSS_DRV="../feeds/nss_packages/qca-nss-drv/files/qca-nss-drv.init"
 if [ -f "$NSS_DRV" ]; then
     echo " "
@@ -110,7 +110,7 @@ if [ -f "$DM_FILE" ]; then
     cd "$PKG_PATH" && echo "diskman has been fixed!"
 fi
 
-#修复luci-app- netspeedtest相关问题
+#修复luci-app-netspeedtest相关问题
 if dir_exists "luci-app-netspeedtest"; then
     echo " "
 
@@ -138,8 +138,8 @@ fi
 LUCI_STORE_FILE=$(find . -path "*/luci-app-store/Makefile" -type f 2>/dev/null | head -1)
 if [ -n "$LUCI_STORE_FILE" ] && [ -f "$LUCI_STORE_FILE" ]; then
     echo "Found luci-app-store at: $LUCI_STORE_FILE"
-    # APK不允许版本号中包含r前缀的revision，移除r前缀
-    sed -i 's/\(PKG_VERSION:=.*\)-r/\1./g' "$LUCI_STORE_FILE"
+    # APK不允许版本号中包含r前缀的revision，修复PKG_VERSION和PKG_RELEASE
+    sed -i 's/\(PKG_VERSION:=.*\)-r/\1./g; s/PKG_RELEASE:=r\([0-9]\)/PKG_RELEASE:=\1/g' "$LUCI_STORE_FILE"
     cd "$PKG_PATH" && echo "luci-app-store version has been fixed!"
 fi
 
