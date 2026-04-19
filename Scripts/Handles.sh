@@ -134,12 +134,15 @@ if [ -d "./package/cups" ]; then
     fi
 fi
 
-# tcping 编译详细日志
-TCPING_PKG=$(find . -path "*/tcping/Makefile" -type f 2>/dev/null | head -1)
-if [ -n "$TCPING_PKG" ]; then
-    echo "  [DEBUG] tcping Makefile path: $TCPING_PKG"
-    echo "  [DEBUG] tcping Makefile content:"
-    cat "$TCPING_PKG" | sed 's/^/    /'
+# 修复tcping编译失败 - 替换small8仓库的tcping Makefile
+TCPING_PKG="./feeds/small8/tcping/Makefile"
+if [ -f "$TCPING_PKG" ]; then
+    echo "  [修复] 检测到 small8 tcping，准备替换为 passwall 版本"
+    if curl -fsSL -o "$TCPING_PKG" "https://raw.githubusercontent.com/Openwrt-Passwall/openwrt-passwall-packages/refs/heads/main/tcping/Makefile"; then
+        echo "  [完成] tcping 已替换为 passwall 版本"
+    else
+        echo "  [错误] tcping 下载失败"
+    fi
 fi
 
 # 修复luci-app-store版本号问题 (移除r前缀以符合APK规范)
