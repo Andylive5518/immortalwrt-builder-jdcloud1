@@ -194,7 +194,7 @@ if [ -n "$NAIVE_FILE" ] && [ -f "$NAIVE_FILE" ]; then
     # 修正 APK 版本: base-1 符合 APK 规范 (只有一个连字符)
     sed -i "s/^PKG_VERSION:=$CUR_VER/PKG_VERSION:=$BASE_VER/g" "$NAIVE_FILE"
     sed -i "s/^PKG_RELEASE:=$CUR_REL/PKG_RELEASE:=1/g" "$NAIVE_FILE"
-    sed -i "s|v\$(PKG_VERSION)|${BASE_VER}-1|g" "$NAIVE_FILE"
+    sed -i "s|v\$(PKG_VERSION)|v${BASE_VER}-1|g" "$NAIVE_FILE"
 fi
 
 echo "All fixes completed!"
