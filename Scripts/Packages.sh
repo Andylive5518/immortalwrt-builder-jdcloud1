@@ -186,13 +186,15 @@ INSTALL_FROM_FEEDS() {
         tuic-client chinadns-ng ipt2socks tcping simple-obfs \
         v2dat mosdns luci-app-mosdns adguardhome luci-app-adguardhome ddns-go \
         luci-app-ddns-go taskd luci-lib-xterm luci-lib-taskd luci-app-store quickstart \
-        luci-app-quickstart luci-app-istorex luci-app-cloudflarespeedtest netdata luci-app-netdata \
-        lucky luci-app-lucky luci-app-openclash luci-app-homeproxy nikki luci-app-nikki \
+        luci-app-quickstart luci-app-istorex luci-app-cloudflarespeedtest \
+        lucky luci-app-lucky luci-app-openclash luci-app-homeproxy nikki luci-app-nikki momo luci-app-momo\
         oaf open-app-filter luci-app-oaf msd_lite luci-app-msd_lite \
-        luci-theme-argon luci-app-argon-config luci-theme-argone luci-app-argone-config luci-theme-aurora \
-        luci-app-passwall luci-app-passwall2 luci-app-smartdns \
-        luci-app-diskman luci-app-easytier luci-app-openlist2 \
-        luci-app-partexp luci-app-qbittorrent luci-app-vnt
+        luci-theme-argon luci-app-argon-config \
+        # luci-theme-argone luci-app-argone-config luci-theme-aurora \
+        luci-app-passwall luci-app-passwall2 luci-app-smartdns smartdns \
+        luci-app-diskman luci-app-samba4 luci-app-upnp luci-app-wolplus luci-app-easytier \
+        luci-app-dockerman docker dockerd luci-app-wechatpush luci-app-autoreboot \
+        luci-app-partexp luci-app-vnt
     echo "  [完成] 从 small8 安装插件"
 }
 
