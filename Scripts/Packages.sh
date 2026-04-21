@@ -6,6 +6,18 @@
 set -e
 
 # ============================================================================
+# 全局变量
+# ============================================================================
+
+# 从 PassWall feed 安装的代理插件列表（避免被 small8 覆盖）
+declare -a PASSWALL_PKGS=(
+    chinadns-ng dns2socks geoview hysteria ipt2socks microsocks
+    shadow-tls shadowsocks-libev shadowsocks-rust shadowsocksr-libev simple-obfs
+    sing-box tuic-client v2ray-geodata v2ray-plugin xray-core xray-plugin
+    naiveproxy tcping trojan-plus
+)
+
+# ============================================================================
 # 第一部分：冲突包批量删除 (借鉴外部作者的 remove_unwanted_packages)
 # ============================================================================
 
@@ -68,7 +80,7 @@ REMOVE_CONFLICT_PACKAGES() {
     
     # 批量删除 jell/small8 feed 中的冲突包
     local SMALL8_CONFLICTS=(
-        "ppp" "firewall" "dae" "daed" "daed-next" "libnftnl" "nftables" 
+        "ppp" "firewall" "dae" "daed" "daed-next" "libnftnl" "nftables"
         "dnsmasq" "luci-app-alist" "alist" "opkg" "smartdns" "luci-app-smartdns" "easytier"
         "cups" "luci-app-cupsd" "p910nd" "luci-app-p910nd"
     )
@@ -179,12 +191,14 @@ UPDATE_PACKAGE() {
 INSTALL_FROM_FEEDS() {
     echo ">>> 从 feeds 安装第三方包..."
     
+    # 确保 passwall feed 的包优先于 small8
+    # 先从 small8 删除将要从 passwall 安装的代理插件，避免包解析时被 small8 覆盖
+    for pkg in "${PASSWALL_PKGS[@]}"; do
+        rm -rf ./feeds/small8/$pkg 2>/dev/null || true
+    done
+    
     # 从 PassWall 安装代理插件集合
-    ./scripts/feeds install -p passwall -f \
-        chinadns-ng dns2socks geoview hysteria ipt2socks microsocks \
-        shadow-tls shadowsocks-libev shadowsocks-rust shadowsocksr-libev simple-obfs \
-        sing-box tuic-client v2ray-geodata v2ray-plugin xray-core xray-plugin \
-        naiveproxy tcping trojan-plus
+    ./scripts/feeds install -p passwall -f "${PASSWALL_PKGS[@]}"
     echo "  [完成] 从 passwall 安装代理插件"
 
     # 从 small8/jell 安装非代理类插件集合
@@ -258,11 +272,11 @@ main() {
     
     cd $GITHUB_WORKSPACE/wrt/ 2>/dev/null || cd ./wrt/ 2>/dev/null || cd . || exit 1
     
-    # Step 1: 批量删除冲突包
-    REMOVE_CONFLICT_PACKAGES
-    
-    # Step 2: 添加第三方 feeds
+    # Step 1: 添加第三方 feeds (feeds update 会重新克隆，还原所有本地修改)
     ADD_THIRD_PARTY_FEEDS
+    
+    # Step 2: 批量删除冲突包 (在 feeds update 之后执行，删除内容不会被还原)
+    REMOVE_CONFLICT_PACKAGES
     
     # Step 3: 从 feeds 安装插件
     INSTALL_FROM_FEEDS
