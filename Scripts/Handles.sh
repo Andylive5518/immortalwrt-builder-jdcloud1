@@ -135,24 +135,22 @@ if [ -d "./package/cups" ]; then
 fi
 
 # 修复tcping编译失败 - 替换small8仓库的tcping Makefile
-TCPING_PKG="./feeds/small8/tcping/Makefile"
-if [ -f "$TCPING_PKG" ]; then
-    echo "  [修复] 检测到 small8 tcping，准备替换为 passwall 版本"
-    if curl -fsSL -o "$TCPING_PKG" "https://raw.githubusercontent.com/Openwrt-Passwall/openwrt-passwall-packages/refs/heads/main/tcping/Makefile"; then
-        echo "  [完成] tcping 已替换为 passwall 版本"
-    else
-        echo "  [错误] tcping 下载失败"
-    fi
-fi
+# TCPING_PKG="./feeds/small8/tcping/Makefile"
+# if [ -f "$TCPING_PKG" ]; then
+#     echo "  [修复] 检测到 small8 tcping，准备替换为 passwall 版本"
+#     if curl -fsSL -o "$TCPING_PKG" "https://raw.githubusercontent.com/Openwrt-Passwall/openwrt-passwall-packages/refs/heads/main/tcping/Makefile"; then
+#         echo "  [完成] tcping 已替换为 passwall 版本"
+#     else
+#         echo "  [错误] tcping 下载失败"
+#     fi
+# fi
 
 # 修复 dockerman 包版本号问题
 fix_pkg_version() {
     local pkg_name="$1"
     local pkg_file="$2"
     [ ! -f "$pkg_file" ] && return
-
     echo "  [修复] ${pkg_name} 版本号"
-
     grep -q 'PKG_SOURCE_VERSION:=' "$pkg_file" && sed -i '/PKG_SOURCE_VERSION:=/d' "$pkg_file"
     grep -q 'PKG_VERSION:=v' "$pkg_file" && sed -i 's/PKG_VERSION:=v/PKG_VERSION:=/g' "$pkg_file"
     grep -q 'PKG_RELEASE:=r[0-9]' "$pkg_file" && sed -i 's/PKG_RELEASE:=r\([0-9]\)/PKG_RELEASE:=\1/g' "$pkg_file"
@@ -162,19 +160,12 @@ fix_pkg_version() {
 fix_pkg_version "dockerman" "$(find . -path '*/luci-app-dockerman/Makefile' -type f 2>/dev/null | head -1)"
 
 # luci-app-store 修复: 版本格式动态修正
-# 模式: PKG_VERSION 末尾 -N 实为版本标识而非 release
-#   原始: PKG_VERSION:=0.1.32-1, PKG_RELEASE:=66
-#   APK 拼接: 0.1.32-1-r66 (两个连字符, invalid)
-#   修复后: PKG_VERSION:=0.1.32, PKG_RELEASE:=1
-#   APK 拼接: 0.1.32-1 (valid)
 LUCI_STORE_FILE=$(find . -path '*/luci-app-store/Makefile' -type f 2>/dev/null | head -1)
 if [ -n "$LUCI_STORE_FILE" ] && [ -f "$LUCI_STORE_FILE" ]; then
     echo "  [修复] luci-app-store 版本号"
     CUR_VER=$(grep '^PKG_VERSION:=' "$LUCI_STORE_FILE" | sed 's/^PKG_VERSION:=[ ]*//')
     CUR_REL=$(grep '^PKG_RELEASE:=' "$LUCI_STORE_FILE" | sed 's/^PKG_RELEASE:=[ ]*//')
-    # 提取 PKG_VERSION 末尾 -1 前的部分作为 base (仅剥去末尾 -1)
     BASE_VER="${CUR_VER%-1}"
-    # 修正 APK 版本: base-1 符合 APK 规范
     sed -i "s/^PKG_VERSION:=$CUR_VER/PKG_VERSION:=$BASE_VER/g" "$LUCI_STORE_FILE"
     sed -i "s/^PKG_RELEASE:=$CUR_REL/PKG_RELEASE:=1/g" "$LUCI_STORE_FILE"
 fi
@@ -184,17 +175,17 @@ fi
 #   例如 147.0.7727.49-1 → base=147.0.7727.49, pkg_release=1
 #   APK 拼接结果: 147.0.7727.49-1 (valid)
 #   GitHub tag 需要完整版本号: v147.0.7727.49-1
-NAIVE_FILE=$(find . -path '*/naiveproxy/Makefile' -type f 2>/dev/null | head -1)
-if [ -n "$NAIVE_FILE" ] && [ -f "$NAIVE_FILE" ]; then
-    echo "  [修复] naiveproxy 版本号及源码地址"
-    CUR_VER=$(grep '^PKG_VERSION:=' "$NAIVE_FILE" | sed 's/^PKG_VERSION:=[ ]*//')
-    CUR_REL=$(grep '^PKG_RELEASE:=' "$NAIVE_FILE" | sed 's/^PKG_RELEASE:=[ ]*//')
-    # 动态构造: 提取 PKG_VERSION 末尾 -1 前的部分作为 base
-    BASE_VER="${CUR_VER%-1}"
-    # 修正 APK 版本: base-1 符合 APK 规范 (只有一个连字符)
-    sed -i "s/^PKG_VERSION:=$CUR_VER/PKG_VERSION:=$BASE_VER/g" "$NAIVE_FILE"
-    sed -i "s/^PKG_RELEASE:=$CUR_REL/PKG_RELEASE:=1/g" "$NAIVE_FILE"
-    sed -i "s|v\$(PKG_VERSION)|v${BASE_VER}-1|g" "$NAIVE_FILE"
-fi
+# NAIVE_FILE=$(find . -path '*/naiveproxy/Makefile' -type f 2>/dev/null | head -1)
+# if [ -n "$NAIVE_FILE" ] && [ -f "$NAIVE_FILE" ]; then
+#     echo "  [修复] naiveproxy 版本号及源码地址"
+#     CUR_VER=$(grep '^PKG_VERSION:=' "$NAIVE_FILE" | sed 's/^PKG_VERSION:=[ ]*//')
+#     CUR_REL=$(grep '^PKG_RELEASE:=' "$NAIVE_FILE" | sed 's/^PKG_RELEASE:=[ ]*//')
+#     # 动态构造: 提取 PKG_VERSION 末尾 -1 前的部分作为 base
+#     BASE_VER="${CUR_VER%-1}"
+#     # 修正 APK 版本: base-1 符合 APK 规范 (只有一个连字符)
+#     sed -i "s/^PKG_VERSION:=$CUR_VER/PKG_VERSION:=$BASE_VER/g" "$NAIVE_FILE"
+#     sed -i "s/^PKG_RELEASE:=$CUR_REL/PKG_RELEASE:=1/g" "$NAIVE_FILE"
+#     sed -i "s|v\$(PKG_VERSION)|v${BASE_VER}-1|g" "$NAIVE_FILE"
+# fi
 
 echo "All fixes completed!"

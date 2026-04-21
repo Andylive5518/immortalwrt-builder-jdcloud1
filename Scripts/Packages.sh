@@ -108,11 +108,11 @@ ADD_THIRD_PARTY_FEEDS() {
         echo "  [添加] small8 feed (jell)"
     fi
     
-    # # 添加 PassWall feed
-    # if ! grep -q "openwrt-passwall\|passwall" feeds.conf.default; then
-    #     echo "src-git passwall https://github.com/Openwrt-Passwall/openwrt-passwall;main" >> feeds.conf.default
-    #     echo "  [添加] passwall feed"
-    # fi
+    # 添加 PassWall feed (代理类插件)
+    if ! grep -q "openwrt-passwall\|passwall" feeds.conf.default; then
+        echo "src-git passwall https://github.com/Openwrt-Passwall/openwrt-passwall;main" >> feeds.conf.default
+        echo "  [添加] passwall feed"
+    fi
     
     # 更新 feeds
     ./scripts/feeds update -a
@@ -179,22 +179,27 @@ UPDATE_PACKAGE() {
 INSTALL_FROM_FEEDS() {
     echo ">>> 从 feeds 安装第三方包..."
     
-    # 从 small8/jell 安装代理插件集合
+    # 从 PassWall 安装代理插件集合
+    ./scripts/feeds install -p passwall -f \
+        chinadns-ng dns2socks geoview hysteria ipt2socks microsocks \
+        shadow-tls shadowsocks-libev shadowsocks-rust shadowsocksr-libev simple-obfs \
+        sing-box tuic-client v2ray-geodata v2ray-plugin xray-core xray-plugin \
+        naiveproxy tcping trojan-plus
+    echo "  [完成] 从 passwall 安装代理插件"
+
+    # 从 small8/jell 安装非代理类插件集合
     ./scripts/feeds install -p small8 -f \
-        xray-core xray-plugin dns2tcp dns2socks haproxy hysteria \
-        naiveproxy shadowsocks-rust sing-box v2ray-core v2ray-geodata geoview v2ray-plugin \
-        tuic-client chinadns-ng ipt2socks tcping simple-obfs \
-        v2dat mosdns luci-app-mosdns adguardhome luci-app-adguardhome ddns-go \
+        dns2tcp haproxy v2dat mosdns luci-app-mosdns adguardhome luci-app-adguardhome ddns-go \
         luci-app-ddns-go taskd luci-lib-xterm luci-lib-taskd luci-app-store quickstart \
         luci-app-quickstart luci-app-istorex luci-app-cloudflarespeedtest \
         lucky luci-app-lucky luci-app-openclash luci-app-homeproxy nikki luci-app-nikki momo luci-app-momo\
         oaf open-app-filter luci-app-oaf msd_lite luci-app-msd_lite \
-        luci-theme-argon luci-app-argon-config \
+        luci-theme-aurora luci-theme-argon luci-app-argon-config \
         luci-app-passwall luci-app-passwall2 luci-app-smartdns smartdns \
         luci-app-diskman luci-app-samba4 luci-app-upnp luci-app-wolplus luci-app-easytier \
         luci-app-dockerman docker dockerd luci-app-wechatpush luci-app-autoreboot \
         luci-app-partexp luci-app-vnt
-    echo "  [完成] 从 small8 安装插件"
+    echo "  [完成] 从 small8 安装非代理插件"
 }
 
 # ============================================================================
@@ -243,46 +248,6 @@ UPDATE_VERSION() {
 }
 
 # ============================================================================
-# 第六部分：修复第三方包问题 (luci-app-store 版本号格式修复)
-# ============================================================================
-
-FIX_PACKAGE_ISSUES() {
-    echo ">>> 修复第三方包问题..."
-    
-    # 修复 luci-app-store 版本号格式
-    # 错误版本: 0.1.32-1-r66 (包含 r66 导致版本号无效)
-    # 修复为: PKG_VERSION:=0.1.32, PKG_RELEASE:=1
-    local LUCI_APP_STORE_MAKEFILE=$(find ./ ../feeds/ -path "*/luci-app-store/Makefile" 2>/dev/null | head -1)
-    
-    if [ -n "$LUCI_APP_STORE_MAKEFILE" ] && [ -f "$LUCI_APP_STORE_MAKEFILE" ]; then
-        echo "  [修复] luci-app-store 版本号格式"
-        
-        # 检查是否需要修复 (版本号包含 r 或超出标准格式)
-        local CURRENT_VERSION=$(grep -Po "PKG_VERSION:=\K.*" "$LUCI_APP_STORE_MAKEFILE" || echo "")
-        
-        if [[ "$CURRENT_VERSION" =~ r ]]; then
-            local VER_NUM=$(echo "$CURRENT_VERSION" | sed -E 's/-[0-9]+-r[0-9]+//g')
-            local RELEASE_NUM=$(echo "$CURRENT_VERSION" | grep -oP '(?<=-)[0-9]+(?=-r)' || echo "1")
-
-            sed -i "s|PKG_VERSION:=.*|PKG_VERSION:=$VER_NUM|" "$LUCI_APP_STORE_MAKEFILE"
-            sed -i "s|PKG_RELEASE:=.*|PKG_RELEASE:=$RELEASE_NUM|" "$LUCI_APP_STORE_MAKEFILE" 2>/dev/null || \
-                sed -i "/PKG_VERSION/a PKG_RELEASE:=$RELEASE_NUM" "$LUCI_APP_STORE_MAKEFILE"
-
-            echo "    版本: $CURRENT_VERSION -> $VER_NUM (release: $RELEASE_NUM)"
-        fi
-
-        local CURRENT_RELEASE=$(grep -Po "PKG_RELEASE:=\K.*" "$LUCI_APP_STORE_MAKEFILE" || echo "")
-        if [[ "$CURRENT_RELEASE" =~ ^r ]]; then
-            local RELEASE_NUM=$(echo "$CURRENT_RELEASE" | sed 's/^r//')
-            sed -i "s|PKG_RELEASE:=.*|PKG_RELEASE:=$RELEASE_NUM|" "$LUCI_APP_STORE_MAKEFILE"
-            echo "    PKG_RELEASE: $CURRENT_RELEASE -> $RELEASE_NUM"
-        fi
-    fi
-    
-    echo "  [完成] 包问题修复"
-}
-
-# ============================================================================
 # 主流程：按顺序执行
 # ============================================================================
 
@@ -302,10 +267,7 @@ main() {
     # Step 3: 从 feeds 安装插件
     INSTALL_FROM_FEEDS
     
-    # Step 4: 修复第三方包问题 (版本号格式等)
-    FIX_PACKAGE_ISSUES
-    
-    # Step 5: 安装 small8 没有的自定义插件
+    # Step 4: 安装 small8 没有的自定义插件
     echo ""
     echo ">>> 安装自定义插件 (small8 没有的)..."
     # 主题
@@ -334,5 +296,4 @@ else
     export -f INSTALL_FROM_FEEDS
     export -f UPDATE_PACKAGE
     export -f UPDATE_VERSION
-    export -f FIX_PACKAGE_ISSUES
 fi
