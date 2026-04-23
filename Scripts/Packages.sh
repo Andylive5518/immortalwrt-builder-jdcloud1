@@ -69,7 +69,7 @@ REMOVE_SMALL8_PACKAGES() {
         "chinadns-ng" "dns2socks" "geoview" "hysteria" "ipt2socks" "microsocks"
         "shadow-tls" "simple-obfs" "luci-app-modem" "fibocom_QMI_WWAN"
         "sing-box" "tuic-client" "v2ray-geodata" "v2ray-plugin" "xray-core" "xray-plugin"
-        "naiveproxy" "tcping" "trojan-plus"
+        "naiveproxy" "tcping" "trojan-plus" "luci-app-natmap" "webd"
     )
     
     for pkg in "${SMALL8_CONFLICTS[@]}"; do

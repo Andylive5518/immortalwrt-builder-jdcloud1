@@ -170,6 +170,15 @@ if [ -n "$LUCI_STORE_FILE" ] && [ -f "$LUCI_STORE_FILE" ]; then
     sed -i "s/^PKG_RELEASE:=$CUR_REL/PKG_RELEASE:=1/g" "$LUCI_STORE_FILE"
 fi
 
+# 修复 opkg Makefile 降级到上一版本（服务器暂无新版本包）
+OPKG_MAKEFILE="./system/opkg/Makefile"
+if [ -f "$OPKG_MAKEFILE" ]; then
+    echo "  [修复] opkg 版本降级"
+    sed -i 's|PKG_SOURCE_DATE:=2025-11-05|PKG_SOURCE_DATE:=2024-10-16|' "$OPKG_MAKEFILE"
+    sed -i 's|PKG_SOURCE_VERSION:=80503d94e356476250adaf1f669ee955ec26de76|PKG_SOURCE_VERSION:=38eccbb1fd694d4798ac1baf88f9ba83d1eac616|' "$OPKG_MAKEFILE"
+    sed -i 's|PKG_MIRROR_HASH:=41fb2c79ce6014e28f7dd0cd8c65efe803986278f2587d1d4681883d8847d87c|PKG_MIRROR_HASH:=de58ff1c99c14789f9ba8946623c8c1e58d022e7e2a659d6f97c6fde54f2c4f4|' "$OPKG_MAKEFILE"
+fi
+
 # naiveproxy 修复: 版本格式及源码地址动态修正
 # naiveproxy 特殊模式: PKG_VERSION 末尾 -1 实为版本标识而非 release
 #   例如 147.0.7727.49-1 → base=147.0.7727.49, pkg_release=1
