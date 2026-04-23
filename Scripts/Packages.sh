@@ -14,21 +14,10 @@ REMOVE_CONFLICT_PACKAGES() {
     
     # LuCI 应用冲突包
     local LUCI_CONFLICTS=(
-        "luci-app-passwall"
-        "luci-app-ddns-go"
-        "luci-app-rclone"
-        "luci-app-ssr-plus"
-        "luci-app-vssr"
-        "luci-app-daed"
-        "luci-app-dae"
-        "luci-app-alist"
-        "luci-app-homeproxy"
-        "luci-app-haproxy-tcp"
-        "luci-app-openclash"
-        "luci-app-mihomo"
-        "luci-app-appfilter"
-        "luci-app-msd_lite"
-        "luci-app-unblockneteasemusic"
+        "luci-app-passwall" "luci-app-ddns-go" "luci-app-rclone" "luci-app-ssr-plus" "luci-app-vssr" "luci-app-daed"
+        "luci-app-dae" "luci-app-alist" "luci-app-homeproxy" "luci-app-haproxy-tcp" "luci-app-openclash"
+        "luci-app-mihomo" "luci-app-appfilter" "luci-app-msd_lite" "luci-app-unblockneteasemusic" "luci-app-adguardhome"
+        "luci-theme-argon" "luci-app-argon-config" "luci-app-diskman" "luci-app-dockerman" "luci-app-smartdns" "luci-app-wechatpush"
     )
     
     # 网络包冲突
@@ -59,6 +48,18 @@ REMOVE_CONFLICT_PACKAGES() {
             echo "  [删除] feeds/packages/net/$pkg"
         fi
     done
+
+    # 删除 iStore
+    if [ -d "./package/istore" ]; then
+        rm -rf "./package/istore"
+        echo "  [删除] package/istore"
+    fi
+    
+    echo ">>> 冲突包批量删除完成"
+}
+
+REMOVE_SMALL8_PACKAGES() {
+    echo ">>> 开始批量删除SMALL8冲突包..."
     
     # 批量删除 jell/small8 feed 中的冲突包
     local SMALL8_CONFLICTS=(
@@ -66,7 +67,7 @@ REMOVE_CONFLICT_PACKAGES() {
         "dnsmasq" "luci-app-alist" "alist" "opkg" "smartdns" "luci-app-smartdns" "easytier"
         "cups" "luci-app-cupsd" "p910nd" "luci-app-p910nd"
         "chinadns-ng" "dns2socks" "geoview" "hysteria" "ipt2socks" "microsocks"
-        "shadow-tls" "shadowsocks-libev" "shadowsocks-rust" "shadowsocksr-libev" "simple-obfs"
+        "shadow-tls" "simple-obfs" "luci-app-modem" "fibocom_QMI_WWAN"
         "sing-box" "tuic-client" "v2ray-geodata" "v2ray-plugin" "xray-core" "xray-plugin"
         "naiveproxy" "tcping" "trojan-plus"
     )
@@ -78,13 +79,25 @@ REMOVE_CONFLICT_PACKAGES() {
         fi
     done
 
-    # 删除 iStore
-    if [ -d "./package/istore" ]; then
-        rm -rf "./package/istore"
-        echo "  [删除] package/istore"
-    fi
+    echo ">>> SMALL8冲突包批量删除完成"
+}
+
+REMOVE_PASSWALL_PACKAGES() {
+    echo ">>> 开始批量删除PassWall冲突包..."
     
-    echo ">>> 冲突包批量删除完成"
+    # 批量删除 PassWall feed 中的冲突包
+    local PASSWALL_CONFLICTS=(
+        "shadowsocks-libev" "shadowsocksr-libev"
+    )
+    
+    for pkg in "${PASSWALL_CONFLICTS[@]}"; do
+        if [ -d "./feeds/passwall_packages/$pkg" ]; then
+            rm -rf "./feeds/passwall_packages/$pkg"
+            echo "  [删除] feeds/passwall_packages/$pkg"
+        fi
+    done
+
+    echo ">>> PassWall冲突包批量删除完成"
 }
 
 # ============================================================================
@@ -171,9 +184,26 @@ UPDATE_PACKAGE() {
 # ============================================================================
 # 第四部分：Feeds 安装函数
 # ============================================================================
+INSTALL_SMALL8_FEEDS() {
+    echo ">>> 从 small8 feeds 安装第三方包..."
 
-INSTALL_FROM_FEEDS() {
-    echo ">>> 从 feeds 安装第三方包..."
+    # 从 small8/jell 安装非代理类插件集合
+    ./scripts/feeds install -p small8 -f \
+        dns2tcp haproxy v2dat mosdns luci-app-mosdns adguardhome luci-app-adguardhome ddns-go \
+        luci-app-ddns-go taskd luci-lib-xterm luci-lib-taskd luci-app-store quickstart \
+        luci-app-quickstart luci-app-istorex luci-app-cloudflarespeedtest \
+        lucky luci-app-lucky luci-app-openclash luci-app-homeproxy nikki luci-app-nikki momo luci-app-momo\
+        oaf open-app-filter luci-app-oaf msd_lite luci-app-msd_lite shadowsocks-libev shadowsocksr-libev \
+        luci-theme-aurora luci-theme-argon luci-app-argon-config \
+        luci-app-passwall luci-app-passwall2 luci-app-smartdns smartdns \
+        luci-app-diskman luci-app-samba4 luci-app-upnp luci-app-wolplus luci-app-easytier \
+        luci-app-dockerman docker dockerd luci-app-wechatpush luci-app-autoreboot \
+        luci-app-partexp luci-app-vnt
+    echo "  [完成] 从 small8 安装非代理插件"
+}
+
+INSTALL_PASSWALL_FEEDS() {
+    echo ">>> 从 PassWall feeds 安装第三方包..."
 
     # 从 PassWall 官方克隆核心代理包到 package/ 目录
     if [ ! -d "./package/passwall-packages" ]; then
@@ -185,23 +215,6 @@ INSTALL_FROM_FEEDS() {
     else
         echo "  [跳过] passwall-packages 已存在"
     fi
-
-    # 重新生成 feeds 索引（package/ 下的包需要注册到构建系统）
-    ./scripts/feeds update -i -a
-
-    # 从 small8/jell 安装非代理类插件集合
-    ./scripts/feeds install -p small8 -f \
-        dns2tcp haproxy v2dat mosdns luci-app-mosdns adguardhome luci-app-adguardhome ddns-go \
-        luci-app-ddns-go taskd luci-lib-xterm luci-lib-taskd luci-app-store quickstart \
-        luci-app-quickstart luci-app-istorex luci-app-cloudflarespeedtest \
-        lucky luci-app-lucky luci-app-openclash luci-app-homeproxy nikki luci-app-nikki momo luci-app-momo\
-        oaf open-app-filter luci-app-oaf msd_lite luci-app-msd_lite \
-        luci-theme-aurora luci-theme-argon luci-app-argon-config \
-        luci-app-passwall luci-app-passwall2 luci-app-smartdns smartdns \
-        luci-app-diskman luci-app-samba4 luci-app-upnp luci-app-wolplus luci-app-easytier \
-        luci-app-dockerman docker dockerd luci-app-wechatpush luci-app-autoreboot \
-        luci-app-partexp luci-app-vnt
-    echo "  [完成] 从 small8 安装非代理插件"
 }
 
 # ============================================================================
@@ -261,12 +274,12 @@ main() {
     cd $GITHUB_WORKSPACE/wrt/ 2>/dev/null || cd ./wrt/ 2>/dev/null || cd . || exit 1
 
     ADD_THIRD_PARTY_FEEDS          # 写入 feeds.conf.default
-
     ./scripts/feeds update -a      # 先 clone 所有 feeds
-
     REMOVE_CONFLICT_PACKAGES       # feeds clone 完之后再删冲突包
-
-    INSTALL_FROM_FEEDS             # 安装第三方包
+    INSTALL_PASSWALL_FEEDS             # 安装 PassWall feed 中的核心代理包
+    REMOVE_PASSWALL_PACKAGES
+    INSTALL_SMALL8_FEEDS              # 安装 small8 feed 中的包
+    REMOVE_SMALL8_PACKAGES
 
     echo ""
     echo ">>> 安装自定义插件 (small8 没有的)..."
@@ -293,7 +306,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 else
     export -f REMOVE_CONFLICT_PACKAGES
     export -f ADD_THIRD_PARTY_FEEDS
-    export -f INSTALL_FROM_FEEDS
+    export -f INSTALL_PASSWALL_FEEDS
+    export -f REMOVE_PASSWALL_PACKAGES
+    export -f INSTALL_SMALL8_FEEDS
+    export -f REMOVE_SMALL8_PACKAGES
     export -f UPDATE_PACKAGE
     export -f UPDATE_VERSION
 fi
